@@ -5,6 +5,7 @@ import type {Bundle} from './types';
 import type InternalBundleGraph from './BundleGraph';
 
 import AssetGraph from './AssetGraph';
+import {Asset} from './public/Asset';
 import {BundleGraph} from './public/BundleGraph';
 import BundlerRunner from './BundlerRunner';
 import WorkerFarm from '@parcel/workers';
@@ -113,7 +114,7 @@ export default class Parcel {
       });
 
       let startTime = Date.now();
-      let assetGraph = await this.assetGraphBuilder.build();
+      let {assetGraph, changedAssets} = await this.assetGraphBuilder.build();
       dumpGraphToGraphViz(assetGraph, 'MainAssetGraph');
 
       let bundleGraph = await this.bundle(assetGraph);
@@ -123,7 +124,9 @@ export default class Parcel {
 
       this.reporterRunner.report({
         type: 'buildSuccess',
-        changedAssets: new Map(this.assetGraphBuilder.changedAssets),
+        changedAssets: new Map(
+          Array.from(changedAssets).map(([id, asset]) => [id, new Asset(asset)])
+        ),
         assetGraph: new MainAssetGraph(assetGraph),
         bundleGraph: new BundleGraph(bundleGraph),
         buildTime: Date.now() - startTime
